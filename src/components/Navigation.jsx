@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, Dumbbell, Apple, LogOut, Flame, Lock } from 'lucide-react'
+import { Home, Dumbbell, Apple, LogOut, Flame, Settings } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { motion } from 'framer-motion'
 
@@ -18,7 +18,7 @@ export default function Navigation() {
     { to: '/home', label: 'Home', icon: Home },
     { to: '/exercise', label: 'Workouts', icon: Dumbbell },
     { to: '/food', label: 'Diet', icon: Apple },
-    { to: '/security', label: 'Security', icon: Lock },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ]
 
   return (

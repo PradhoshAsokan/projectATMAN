@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import ProgressRing from '../components/ProgressRing'
 import WarnBanner from '../components/WarnBanner'
@@ -20,17 +20,12 @@ import {
   Footprints,
   Droplet,
   Plus,
-  Minus,
   Trophy,
   Calendar,
   Sparkles,
   Activity,
-  User,
-  Scale,
-  Ruler,
-  AlertCircle,
-  Check,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react'
 
 // Helper to get local date string YYYY-MM-DD
@@ -45,19 +40,9 @@ export default function Home() {
   const userMetrics = useStore((state) => state.userMetrics)
   const dailyLogs = useStore((state) => state.dailyLogs)
   const logDailyMetric = useStore((state) => state.logDailyMetric)
-  const saveMetrics = useStore((state) => state.saveMetrics)
 
   const [chartDays, setChartDays] = useState(14)
   const [successMsg, setSuccessMsg] = useState('')
-  const [profileMsg, setProfileMsg] = useState('')
-
-  // Local state for profile form
-  const [profileInput, setProfileInput] = useState({
-    starting_weight: '',
-    height: '',
-    goal_weight: '',
-    start_date: ''
-  })
 
   // Local states for telemetry logging inputs
   const [logInput, setLogInput] = useState({
@@ -66,18 +51,7 @@ export default function Home() {
     calories: ''
   })
 
-  // Sync profile fields with store metrics
-  useEffect(() => {
-    if (userMetrics) {
-      setProfileInput({
-        starting_weight: String(userMetrics.starting_weight || ''),
-        height: String(userMetrics.height || ''),
-        goal_weight: String(userMetrics.goal_weight || ''),
-        start_date: userMetrics.start_date || ''
-      })
-    }
-  }, [userMetrics])
-
+  // Loading guard for userMetrics configuration checks
   if (!userMetrics) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-obsidian text-white relative">
@@ -103,7 +77,6 @@ export default function Home() {
   const getTenureStats = () => {
     if (!userMetrics.start_date) return { days: 1, phase: 1, calorieTarget: 2500 }
     
-    // Split YYYY-MM-DD to avoid timezone shifting when calling new Date()
     const [year, month, day] = userMetrics.start_date.split('-').map(Number)
     const start = new Date(year, month - 1, day)
     
@@ -177,20 +150,6 @@ export default function Home() {
 
     setLogInput({ ...logInput, [field]: '' })
     setTimeout(() => setSuccessMsg(''), 3000)
-  }
-
-  // Save profile metrics
-  const handleProfileSave = async (e) => {
-    e.preventDefault()
-    const payload = {
-      starting_weight: parseFloat(profileInput.starting_weight) || 0,
-      height: parseFloat(profileInput.height) || 0,
-      goal_weight: parseFloat(profileInput.goal_weight) || 0,
-      start_date: profileInput.start_date
-    }
-    await saveMetrics(payload)
-    setProfileMsg('Metrics configuration updated successfully.')
-    setTimeout(() => setProfileMsg(''), 3000)
   }
 
   // Memoize filtered chart data
@@ -401,189 +360,84 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Profiling and Metric Logging Area */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-start">
-          
-          {/* Biometric Calibration Card */}
+        {/* Telemetry Ingestion Panel (Full-Width Row) */}
+        <div className="grid grid-cols-1 gap-6 mb-6">
           <motion.div
-            className="glass-panel rounded-2xl p-6 border border-white/5 text-left md:col-span-1"
+            className="glass-panel rounded-2xl p-6 border border-white/5 text-left"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h3 className="font-heading font-bold text-white text-base mb-1 uppercase tracking-wider flex items-center">
-              <User className="w-4 h-4 text-electric-cyan mr-2" />
-              Biometric Calibration
-            </h3>
-            <p className="text-xs text-gray-500 mb-5">
-              Calibrate physical baselines to automatically recalibrate BMI ranges and calorie boundaries.
-            </p>
+            <div className="mb-4">
+              <h3 className="font-heading font-bold text-white text-base mb-1 uppercase tracking-wider flex items-center">
+                <Activity className="w-4.5 h-4.5 text-electric-cyan mr-2" />
+                Ingestion Core
+              </h3>
+              <p className="text-xs text-gray-500">
+                Overwrite steps, body mass, and calorie levels into today's active registers.
+              </p>
+            </div>
 
-            <AnimatePresence>
-              {profileMsg && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 rounded-lg bg-neon-mint/10 border border-neon-mint/20 text-[11px] text-neon-mint flex items-center space-x-1.5"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{profileMsg}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <form onSubmit={handleProfileSave} className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 flex items-center">
-                    <Scale className="w-3 h-3 text-gray-500 mr-0.5" />
-                    Start
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g. 102.5"
-                    value={profileInput.starting_weight}
-                    onChange={(e) => setProfileInput({ ...profileInput, starting_weight: e.target.value })}
-                    className="w-full text-xs py-2"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 flex items-center">
-                    <Ruler className="w-3 h-3 text-gray-500 mr-0.5" />
-                    Height
-                  </label>
-                  <input
-                    type="number"
-                    step="1"
-                    placeholder="e.g. 178"
-                    value={profileInput.height}
-                    onChange={(e) => setProfileInput({ ...profileInput, height: e.target.value })}
-                    className="w-full text-xs py-2"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 flex items-center">
-                    <Trophy className="w-3 h-3 text-gray-500 mr-0.5" />
-                    Goal
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g. 64.5"
-                    value={profileInput.goal_weight}
-                    onChange={(e) => setProfileInput({ ...profileInput, goal_weight: e.target.value })}
-                    className="w-full text-xs py-2"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Start Date Configuration Picker */}
-              <div className="space-y-1 mt-3">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 flex items-center">
-                  <Calendar className="w-3 h-3 text-gray-500 mr-1" />
-                  Program Start Date
-                </label>
-                <input
-                  type="date"
-                  value={profileInput.start_date}
-                  onChange={(e) => setProfileInput({ ...profileInput, start_date: e.target.value })}
-                  className="w-full text-xs py-2"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-white/5 border border-white/8 hover:bg-white/10 hover:border-white/15 text-white font-bold text-[10px] rounded-xl tracking-wider uppercase transition-all duration-300 cursor-pointer"
-              >
-                Write Baselines
-              </button>
-            </form>
-          </motion.div>
-
-          {/* Quick Metrics Log Card */}
-          <motion.div
-            className="glass-panel rounded-2xl p-6 border border-white/5 text-left md:col-span-2"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <h3 className="font-heading font-bold text-white text-base mb-1 uppercase tracking-wider flex items-center">
-              <Activity className="w-4 h-4 text-electric-cyan mr-2" />
-              Ingestion Core
-            </h3>
-            <p className="text-xs text-gray-500 mb-5">
-              Overwrite steps/mass and append calories logged to active registers.
-            </p>
-
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <form onSubmit={(e) => handleQuickLog(e, 'steps')} className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block">Steps</label>
-                <div className="flex space-x-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Steps Logged</label>
+                <div className="flex space-x-2">
                   <input
                     type="number"
-                    placeholder="Steps"
+                    placeholder="e.g. 8000"
                     value={logInput.steps}
                     onChange={(e) => setLogInput({ ...logInput, steps: e.target.value })}
-                    className="w-full text-xs p-1.5"
+                    className="w-full text-xs py-2.5 px-3"
                   />
-                  <button type="submit" className="p-1.5 bg-electric-cyan/15 border border-electric-cyan/20 rounded-lg text-electric-cyan cursor-pointer">
-                    <Plus className="w-3.5 h-3.5" />
+                  <button type="submit" className="px-4 py-2.5 bg-electric-cyan/15 border border-electric-cyan/20 rounded-xl text-electric-cyan font-bold text-xs uppercase cursor-pointer">
+                    Log
                   </button>
                 </div>
               </form>
 
               <form onSubmit={(e) => handleQuickLog(e, 'weight')} className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block">Weight</label>
-                <div className="flex space-x-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Body Weight (kg)</label>
+                <div className="flex space-x-2">
                   <input
                     type="number"
                     step="0.1"
-                    placeholder="Mass"
+                    placeholder="e.g. 78.5"
                     value={logInput.weight}
                     onChange={(e) => setLogInput({ ...logInput, weight: e.target.value })}
-                    className="w-full text-xs p-1.5"
+                    className="w-full text-xs py-2.5 px-3"
                   />
-                  <button type="submit" className="p-1.5 bg-yellow-500/15 border border-yellow-500/20 rounded-lg text-yellow-400 cursor-pointer">
-                    <Plus className="w-3.5 h-3.5" />
+                  <button type="submit" className="px-4 py-2.5 bg-yellow-500/15 border border-yellow-500/20 rounded-xl text-yellow-400 font-bold text-xs uppercase cursor-pointer">
+                    Log
                   </button>
                 </div>
               </form>
 
               <form onSubmit={(e) => handleQuickLog(e, 'calories')} className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block">Intake</label>
-                <div className="flex space-x-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Calorie Intake (kcal)</label>
+                <div className="flex space-x-2">
                   <input
                     type="number"
-                    placeholder="Kcal"
+                    placeholder="e.g. 650"
                     value={logInput.calories}
                     onChange={(e) => setLogInput({ ...logInput, calories: e.target.value })}
-                    className="w-full text-xs p-1.5"
+                    className="w-full text-xs py-2.5 px-3"
                   />
-                  <button type="submit" className="p-1.5 bg-neon-mint/15 border border-neon-mint/20 rounded-lg text-neon-mint cursor-pointer">
-                    <Plus className="w-3.5 h-3.5" />
+                  <button type="submit" className="px-4 py-2.5 bg-neon-mint/15 border border-neon-mint/20 rounded-xl text-neon-mint font-bold text-xs uppercase cursor-pointer">
+                    Log
                   </button>
                 </div>
               </form>
             </div>
             
-            <div className="flex justify-between items-center mt-5 pt-3 border-t border-white/5">
-              <span className="text-[10px] text-gray-500 font-bold uppercase">H2O Intake:</span>
-              <div className="flex space-x-1 items-center">
-                <button onClick={() => handleWaterUpdate(-0.25)} className="px-1.5 py-1 bg-white/5 rounded text-[10px] text-gray-400">-0.25</button>
-                <span className="text-xs text-white font-bold px-1.5">{todayLog.water_intake_liters.toFixed(1)}L</span>
-                <button onClick={() => handleWaterUpdate(0.25)} className="px-1.5 py-1 bg-cyan-500/15 text-cyan-400 border border-cyan-500/25 rounded text-[10px]">+0.25</button>
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/5">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">H2O Hydration Tracking</span>
+              <div className="flex space-x-1.5 items-center">
+                <button onClick={() => handleWaterUpdate(-0.25)} className="px-2.5 py-1.5 bg-white/5 rounded-lg text-xs text-gray-400 hover:bg-white/10">-0.25L</button>
+                <span className="text-sm text-white font-black px-3">{todayLog.water_intake_liters.toFixed(2)} L</span>
+                <button onClick={() => handleWaterUpdate(0.25)} className="px-2.5 py-1.5 bg-cyan-500/15 text-cyan-400 border border-cyan-500/25 rounded-lg text-xs font-bold hover:bg-cyan-500/25">+0.25L</button>
               </div>
             </div>
           </motion.div>
-
         </div>
 
         {/* Dual Axis Analytical Graph */}
@@ -591,7 +445,7 @@ export default function Home() {
           className="glass-panel rounded-2xl p-5 md:p-6 border border-white/5 text-left"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>

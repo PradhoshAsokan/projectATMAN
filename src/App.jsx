@@ -11,7 +11,7 @@ const Login = lazy(() => import('./pages/Login'))
 const Home = lazy(() => import('./pages/Home'))
 const Exercise = lazy(() => import('./pages/Exercise'))
 const Food = lazy(() => import('./pages/Food'))
-const Security = lazy(() => import('./pages/Security'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 // Sleek loading screen for lazy page transitions
 const RouteLoader = () => (
@@ -229,10 +229,10 @@ export default function App() {
             }
           />
           <Route
-            path="/security"
+            path="/settings"
             element={
               <ProtectedRoute>
-                <Security />
+                <Settings />
               </ProtectedRoute>
             }
           />
